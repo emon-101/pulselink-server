@@ -55,6 +55,14 @@ async function run() {
         res.send(result);
     })
 
+    app.get('/api/donation-request/:id', async(req, res) => {
+        const { id } = req.params;
+        const result = await donationsRequestCollection.findOne({
+            _id: new ObjectId(id)
+        });
+        res.send(result);
+    })
+
     app.patch('/api/donation-request/:id', async(req, res) => {
         const { id } = req.params;
         const updates = req.body;
