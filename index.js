@@ -1,6 +1,6 @@
 const express = require('express')
 const cors = require('cors')
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express()
 require('dotenv').config();
 
@@ -52,6 +52,16 @@ async function run() {
         const { requesterId } = req.query;
         const query = requesterId ? { requesterId } : {};
         const result = await donationsRequestCollection.find(query).toArray();
+        res.send(result);
+    })
+
+    app.patch('/api/donation-request/:id', async(req, res) => {
+        const { id } = req.params;
+        const updates = req.body;
+        const result = await donationsRequestCollection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: updates }
+        );
         res.send(result);
     })
 
