@@ -34,6 +34,20 @@ async function run() {
     // Database collections
     const database = client.db("pulse_link");
 
+    const donationsRequestCollection =  database.collection("donations_request");
+
+
+    // Donation Request related APIs
+    app.post('/api/donation-request', async(req, res) => {
+        const donation = req.body;
+        const newDonation = {
+            ...donation,
+            createdAt: new Date()
+        }
+        const result = await donationsRequestCollection.insertOne(newDonation);
+        res.send(result);
+    })
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
