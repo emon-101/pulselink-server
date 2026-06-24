@@ -35,6 +35,7 @@ async function run() {
     const database = client.db("pulse_link");
 
     const donationsRequestCollection =  database.collection("donations_request");
+    const usersCollection = database.collection("user");
 
 
     // Donation Request related APIs
@@ -78,6 +79,13 @@ async function run() {
         const result = await donationsRequestCollection.deleteOne({
             _id: new ObjectId(id)
         });
+        res.send(result);
+    })
+
+    app.get('/api/users', async(req, res) => {
+        const { status } = req.query;
+        const query = status ? { status } : {};
+        const result = await usersCollection.find(query).toArray();
         res.send(result);
     })
 
