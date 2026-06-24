@@ -82,6 +82,8 @@ async function run() {
         res.send(result);
     })
 
+    // Users related APIs
+
     app.get('/api/users', async(req, res) => {
         const { status } = req.query;
         const query = status ? { status } : {};
@@ -97,6 +99,37 @@ async function run() {
             { $set: updates }
         );
         res.send(result);
+    })
+
+    // Donor's Related APIs
+    app.get('/api/donors/search', async(req, res) => {
+        const { bloodGroup, district, upazila } = req.query;
+        
+        if(!bloodGroup || !district || !upazila) {
+            return res.status(400).json({
+                error: 'bloodGroup, district, and upazila are all required.'
+            });
+        }
+
+        const query = {
+            role: 'donor',
+            status: 'active',
+            bloodGroup,
+            district,
+            upazila,
+        };
+
+        const projection = {
+            name: 1,
+            email: 1,
+            image: 1,
+            bloodGroup: 1,
+            district: 1,
+            upazila: 1,
+        };
+
+        const donors = await usersCollection.find(query, { projection }).sort({ createdAt: -1 }).toArray();
+        res.send(donors);
     })
 
     // Send a ping to confirm a successful connection
