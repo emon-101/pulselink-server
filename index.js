@@ -132,6 +132,15 @@ async function run() {
         res.send(donors);
     })
 
+    // Stats related APIs
+    app.get('/api/stats', async(req, res) => {
+        const [totalDonors, totalRequests] = await Promise.all([
+            usersCollection.countDocuments({ role: 'donor' }),
+            donationsRequestCollection.countDocuments({}),
+        ]);
+        res.send({ totalDonors, totalRequests });
+    })
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
