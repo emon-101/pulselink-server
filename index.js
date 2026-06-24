@@ -56,6 +56,33 @@ async function run() {
         res.send(result);
     })
 
+    app.get('/api/donation-request/trends', async(req, res) => {
+        const range = ['day', 'week', 'month'].includes(req.query.range)
+        ? req.query.range
+        : 'day';
+
+        const result = await donationsRequestCollection.aggregate([
+            {
+                $group: {
+                    _id: {
+                        $dateTrunc: { date: '$createdAt', unit: range }
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { _id: 1 } },
+            {
+                $project: {
+                    _id: 0,
+                    date: '$_id',
+                    count: 1
+                }
+            }
+        ]).toArray();
+
+        res.send(result);
+    })
+
     app.get('/api/donation-request/:id', async(req, res) => {
         const { id } = req.params;
         const result = await donationsRequestCollection.findOne({
