@@ -1,4 +1,4 @@
-const { jwtVerify, createRemoteJWKSet } = require('jose');
+const { jwtVerify, createRemoteJWKSet } = require('jose-cjs');
 
 const NEXT_APP_URL = process.env.NEXT_APP_URL || 'http://localhost:3000';
 const JWKS = createRemoteJWKSet(new URL(`${NEXT_APP_URL}/api/auth/jwks`));
