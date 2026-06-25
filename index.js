@@ -1,6 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { verifyJWT, requireRole } = require('./middleware-auth');
 const app = express()
 require('dotenv').config();
 
@@ -39,7 +40,7 @@ async function run() {
 
 
     // Donation Request related APIs
-    app.post('/api/donation-request', async(req, res) => {
+    app.post('/api/donation-request', verifyJWT, async(req, res) => {
         const donation = req.body;
         const newDonation = {
             ...donation,
@@ -56,7 +57,7 @@ async function run() {
         res.send(result);
     })
 
-    app.get('/api/donation-request/trends', async(req, res) => {
+    app.get('/api/donation-request/trends', verifyJWT, requireRole('admin'), async(req, res) => {
         const range = ['day', 'week', 'month'].includes(req.query.range)
         ? req.query.range
         : 'day';
@@ -91,7 +92,7 @@ async function run() {
         res.send(result);
     })
 
-    app.patch('/api/donation-request/:id', async(req, res) => {
+    app.patch('/api/donation-request/:id', verifyJWT, async(req, res) => {
         const { id } = req.params;
         const updates = req.body;
         const result = await donationsRequestCollection.updateOne(
@@ -101,7 +102,7 @@ async function run() {
         res.send(result);
     })
 
-    app.delete('/api/donation-request/:id', async(req, res) => {
+    app.delete('/api/donation-request/:id', verifyJWT, async(req, res) => {
         const { id } = req.params;
         const result = await donationsRequestCollection.deleteOne({
             _id: new ObjectId(id)
@@ -111,14 +112,14 @@ async function run() {
 
     // Users related APIs
 
-    app.get('/api/users', async(req, res) => {
+    app.get('/api/users', verifyJWT, requireRole('admin'), async(req, res) => {
         const { status } = req.query;
         const query = status ? { status } : {};
         const result = await usersCollection.find(query).toArray();
         res.send(result);
     })
 
-    app.patch('/api/users/:id', async(req, res) => {
+    app.patch('/api/users/:id', verifyJWT, requireRole('admin'), async(req, res) => {
         const { id } = req.params;
         const updates = req.body;
         const result = await usersCollection.updateOne(
@@ -160,7 +161,7 @@ async function run() {
     })
 
     // Stats related APIs
-    app.get('/api/stats', async(req, res) => {
+    app.get('/api/stats', verifyJWT, requireRole('admin'), async(req, res) => {
         const [totalDonors, totalRequests] = await Promise.all([
             usersCollection.countDocuments({ role: 'donor' }),
             donationsRequestCollection.countDocuments({}),
