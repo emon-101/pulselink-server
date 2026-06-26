@@ -165,7 +165,7 @@ const client = new MongoClient(uri, {
     })
 
     // Stats related APIs
-    app.get('/api/stats', verifyJWT, requireRole('admin'), async(req, res) => {
+    app.get('/api/stats', verifyJWT, requireRole('admin', 'volunteer'), async(req, res) => {
         const [totalDonors, totalRequests] = await Promise.all([
             usersCollection.countDocuments({ role: 'donor' }),
             donationsRequestCollection.countDocuments({}),
