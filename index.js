@@ -55,10 +55,37 @@ const client = new MongoClient(uri, {
     })
 
     app.get('/api/donation-request', async(req, res) => {
-        const { requesterId } = req.query;
-        const query = requesterId ? { requesterId } : {};
-        const result = await donationsRequestCollection.find(query).toArray();
-        res.send(result);
+        const { requesterId, status, page, limit } = req.query;
+        const query = {};
+        if(requesterId) query.requesterId = requesterId;
+        if(status) query.donationStatus = status;
+
+        if(!page && !limit) {
+            const result = await donationsRequestCollection.find(query).toArray();
+            return res.send(result);
+        }
+
+        const pageNum = Math.max(1, parseInt(page, 10) || 1);
+        const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 10));
+        const skip = (pageNum -1) * limitNum;
+
+        const [data, total] = await Promise.all([
+            donationsRequestCollection
+                .find(query)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limitNum)
+                .toArray(),
+                donationsRequestCollection.countDocuments(query),
+        ]);
+
+        res.send({
+            data,
+            total,
+            page: pageNum,
+            limit: limitNum,
+            totalPages: Math.ceil(total / limitNum),
+        });
     })
 
     app.get('/api/donation-request/trends', verifyJWT, requireRole('admin'), async(req, res) => {
@@ -117,10 +144,35 @@ const client = new MongoClient(uri, {
     // Users related APIs
 
     app.get('/api/users', verifyJWT, requireRole('admin'), async(req, res) => {
-        const { status } = req.query;
+        const { status, page, limit } = req.query;
         const query = status ? { status } : {};
-        const result = await usersCollection.find(query).toArray();
-        res.send(result);
+
+        if(!page && !limit) {
+            const result = await usersCollection.find(query).toArray();
+            return res.send(result);
+        }
+
+        const pageNum = Math.max(1, parseInt(page, 10) || 1);
+        const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 10));
+        const skip = (pageNum -1) * limitNum;
+
+        const [data, total] = await Promise.all([
+            usersCollection
+                .find(query)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limitNum)
+                .toArray(),
+                usersCollection.countDocuments(query),
+        ]);
+
+        res.send({
+            data,
+            total,
+            page: pageNum,
+            limit: limitNum,
+            totalPages: Math.ceil(total / limitNum),
+        });
     })
 
     app.patch('/api/users/:id', verifyJWT, requireRole('admin'), async(req, res) => {
