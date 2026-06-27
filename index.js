@@ -41,6 +41,58 @@ const client = new MongoClient(uri, {
 
     const donationsRequestCollection =  database.collection("donations_request");
     const usersCollection = database.collection("user");
+    const fundingCollection = database.collection("funding_info");
+
+    // funding related Info
+    app.post("/api/funding", async (req, res) => {
+      const funding = req.body;
+      const newFunding = {
+        ...funding,
+        createdAt: new Date(),
+      };
+      const result = await fundingCollection.insertOne(newFunding);
+      res.send(result);
+    });
+
+    app.get("/api/funding", async (req, res) => {
+      const { page, limit } = req.query;
+      const [totalAggResult, totalContributors] = await Promise.all([
+        fundingCollection
+          .aggregate([{ $group: { _id: null, total: { $sum: "$amount" } } }])
+          .toArray(),
+        fundingCollection.countDocuments({}),
+      ]);
+      const totalAmount = totalAggResult[0]?.total || 0;
+
+      if (!page && !limit) {
+        const fundings = await fundingCollection
+          .find()
+          .sort({ createdAt: -1 })
+          .toArray();
+        return res.send({ data: fundings, totalAmount, totalContributors });
+      }
+
+      const pageNum = Math.max(1, parseInt(page, 10) || 1);
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 10));
+      const skip = (pageNum - 1) * limitNum;
+
+      const data = await fundingCollection
+        .find()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .toArray();
+
+      res.send({
+        data,
+        total: totalContributors,
+        totalAmount,
+        totalContributors,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(totalContributors / limitNum),
+      });
+    });
 
 
     // Donation Request related APIs
